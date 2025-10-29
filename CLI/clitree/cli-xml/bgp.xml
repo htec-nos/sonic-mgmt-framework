@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<CLISH_MODULE
+    xmlns="http://www.dellemc.com/sonic/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:xi="http://www.w3.org/2001/XInclude"
+    xsi:schemaLocation="http://www.dellemc.com/sonic/XMLSchema
+                        http://www.dellemc.com/sonic/XMLSchema/clish.xsd"
+    >
+
+<!-- MODE: configure terminal -->
+<VIEW name="configure-view">
+    <!-- router bgp command -->
+    <COMMAND name="router" help="Enable a routing process">
+    </COMMAND>
+
+    <COMMAND
+        name="router bgp"
+        help="Configure BGP routing protocol"
+        view="configure-bgp-view"
+        viewid="as=${bgp-as-number}"
+        >
+        <PARAM
+            name="bgp-as-number"
+            help="AS number"
+            ptype="RANGE_1_4294967295"
+            >
+        </PARAM>
+        <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py post_openconfig_bgp_bgp_global ${bgp-as-number} 0.0.0.0</ACTION>
+    </COMMAND>
+
+    <!-- no router bgp command -->
+    <COMMAND name="no router" help="Disable a routing process">
+    </COMMAND>
+
+    <COMMAND
+        name="no router bgp"
+        help="Remove BGP routing protocol configuration"
+        >
+        <PARAM
+            name="bgp-as-number"
+            help="AS number"
+            ptype="RANGE_1_4294967295"
+            >
+        </PARAM>
+        <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_bgp_global</ACTION>
+    </COMMAND>
+</VIEW>
+
+<!-- MODE: router bgp view -->
+<VIEW
+    name="configure-bgp-view"
+    prompt="${SYSTEM_NAME}(config-router-bgp)# "
+    depth="2"
+    >
+    <!-- Inheritance from configure-view -->
+    <NAMESPACE
+        ref="configure-view"
+        help="false"
+        completion="false"
+        />
+
+    <!-- show configuration -->
+    <COMMAND
+        name="show configuration"
+        help="Current configuration"
+        >
+        <ACTION builtin="clish_nop"></ACTION>
+        <xi:include href="include/pipe.xml"/>
+    </COMMAND>
+
+    <COMMAND
+        name="no"
+        help="Negate a command or set its defaults"
+        >
+    </COMMAND>
+
+    <!-- router-id command -->
+    <COMMAND
+        name="router-id"
+        help="Configure BGP router identifier"
+        >
+        <PARAM
+            name="router-id-addr"
+            help="Router ID in IPv4 address format"
+            ptype="IP_ADDR"
+            >
+        </PARAM>
+        <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config ${as} ${router-id-addr}</ACTION>
+    </COMMAND>
+
+    <!-- no router-id command -->
+    <COMMAND
+        name="no router-id"
+        help="Remove BGP router identifier"
+        >
+        <ACTION>python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py patch_openconfig_bgp_bgp_global_config ${as} 0.0.0.0</ACTION>
+    </COMMAND>
+</VIEW>
+
+</CLISH_MODULE>
