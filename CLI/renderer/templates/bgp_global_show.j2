@@ -1,0 +1,21 @@
+{% if json_output %}
+{% set vars = {'as': ""} %}
+{% set vars = {'router_id': ""} %}
+
+{% for key in json_output %}
+    {% if "global" in key %}
+        {% set global_data = json_output[key] %}
+
+        {% if "state" in global_data %}
+            {% if vars.update({'as': global_data["state"]["as"]}) %}{% endif %}
+            {% if vars.update({'router_id': global_data["state"]["router-id"]}) %}{% endif %}
+        {% endif %}
+
+        {{'BGP Configuration'}}
+        {{'-' * 40}}
+        {{'AS Number'.ljust(20)}} : {{ vars.as }}
+        {{'Router ID'.ljust(20)}} : {{ vars.router_id }}
+
+    {% endif %}
+{% endfor %}
+{% endif %}
