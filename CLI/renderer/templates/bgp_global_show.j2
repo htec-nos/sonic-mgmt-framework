@@ -10,11 +10,12 @@
             {% if vars.update({'as': global_data["state"]["as"]}) %}{% endif %}
             {% if vars.update({'router_id': global_data["state"]["router-id"]}) %}{% endif %}
         {% endif %}
-
+        {{''}}
         {{'BGP Configuration'}}
         {{'-' * 40}}
         {{'AS Number'.ljust(20)}} : {{ vars.as }}
         {{'Router ID'.ljust(20)}} : {{ vars.router_id }}
+        {{''}}
 
     {% endif %}
 {% endfor %}

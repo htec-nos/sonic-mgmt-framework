@@ -61,12 +61,13 @@
         />
 
     <!-- show configuration -->
+    <COMMAND name="show" help="Show configuration">
+    </COMMAND>
     <COMMAND
-        name="show configuration"
-        help="Current configuration"
+        name="show bgp-global-config"
+        help="Show BGP Global configuration"
         >
-        <ACTION builtin="clish_nop"></ACTION>
-        <xi:include href="include/pipe.xml"/>
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp show_openconfig_bgp_bgp_global_config bgp_global_show.j2</ACTION>
     </COMMAND>
 
     <COMMAND
