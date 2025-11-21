@@ -32,7 +32,6 @@ def bgp_neighbor_path(neighbor_ip):
     return Path("/restconf/data/openconfig-bgp:bgp/neighbors/neighbor={neighbor_address}",
                 neighbor_address=neighbor_ip)
 
-
 def policy_definition_path():
     return Path("/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions")
 
@@ -40,6 +39,15 @@ def policy_definition_path():
 def policy_definition_statements_path(policy_name, statement_name):
     return Path(f"/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={policy_name}/statements/statement={statement_name}")
 
+def bgp_network_af_path(addr, mask, af_type):
+    return Path(f"/restconf/data/openconfig-bgp:bgp/global/afi-safis/afi-safi={af_type}/openconfig-bgp-network-ext:networks/network={addr}%2F{mask}/config")
+
+
+def bgp_network_af_delete_path(addr, mask, af_type):
+    return Path(f"/restconf/data/openconfig-bgp:bgp/global/afi-safis/afi-safi={af_type}/openconfig-bgp-network-ext:networks/network={addr}%2F{mask}")
+
+def bgp_neighbor_af_path(neighbor_address, af_type):
+    return Path(f"/restconf/data/openconfig-bgp:bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={af_type}")
 
 def check_ok(resp):
     """Check if response is OK and print error if not"""
@@ -304,6 +312,7 @@ class Handlers:
         resp = ApiClient().delete(path)
         return check_ok(resp)
 
+    # ==========================================================================
     # route-map handlers
     # ==========================================================================
     @staticmethod
@@ -369,6 +378,131 @@ class Handlers:
             return 1
         return Handlers.put_openconfig_routing_policy_policy_definitions_policy_definition_statements(policy_name, action, statement_name)
 
+    # ==========================================================================
+    # bgp-networks af handlers
+    # ==========================================================================
+    @staticmethod
+    def put_openconfig_bgp_bgp_global_afi_safis_networks(af_type, network_address):
+        """Configure BGP networks """
+        af_type = af_type.upper()
+        if (af_type) != "IPV4_UNICAST":
+            print(f"Not implemented error")
+            return 1
+        try:
+            ipaddress.ip_network(network_address, strict=False)
+        except Exception as e:
+            print(f"{e.message}")
+            return 1
+        
+        try:
+            mask = network_address.split("/")[1]
+            addr = network_address.split("/")[0]
+        except Exception as e:
+            print("Mask length is required for network address entry")
+            print(f"{e.message}")
+            return 1
+    
+        body = {
+            "openconfig-bgp-network-ext:config": {
+                "prefix": network_address
+            }
+        }
+
+        resp = ApiClient().put(bgp_network_af_path(addr, mask, af_type), body)
+        return check_ok(resp)
+
+    @staticmethod
+    def delete_openconfig_bgp_bgp_global_afi_safis_networks(af_type, network_address):
+        """Delete bgp network"""
+        af_type = af_type.upper()
+        if (af_type) != "IPV4_UNICAST":
+            print(f"Not implemented error")
+            return 1
+        try:
+            network_address = ipaddress.ip_network(network_address, strict=False)
+        except Exception as e:
+            print(f"{e.message}")
+            return 1
+        
+        try:
+            mask = network_address.split("/")[1]
+            addr = network_addresssplit("/")[0]
+        except Exception:
+            print("Mask length is required for network address entry")
+            return 1
+
+        resp = ApiClient().delete(bgp_network_af_delete_path(addr, mask, af_type))
+        return check_ok(resp)
+
+    # ==========================================================================
+    # bgp-neighbor af handlers
+    # ==========================================================================
+    @staticmethod
+    def put_openconfig_bgp_bgp_neighbors_afi_safis_activate(af_type, neighbor_address):
+        """Configure BGP networks """
+        af_type = af_type.upper()
+
+        if (af_type) != "IPV4_UNICAST":
+            print(f"Not implemented error")
+            return 1
+        try:
+            ipaddress.ip_network(neighbor_address, strict=False)
+        except Exception as e:
+            print(f"{e.message}")
+            return 1
+
+        if len( neighbor_address.split("/")) != 0:
+            print("The IP address must be provided without mask")
+            return 1
+       
+        body = {
+            "openconfig-bgp:afi-safi": [{
+                "afi-safi-name": f"openconfig-bgp-types:{af_type}",
+                "config": {
+                    "afi-safi-name": f"openconfig-bgp-types:{af_type}",
+                    "enabled": false
+                },
+                "apply-policy": {
+                    "config": {
+                    "export-policy": [
+                        "LEAF1_OUT"
+                    ],
+                    "import-policy": [
+                        "LEAF1_IN"
+                    ]
+                    }
+                },
+                "openconfig-bgp-neighbor-af-ext:neighbor-afi-safi-ext": {
+                    "config": {
+                    "next-hop-self": false,
+                    "route-reflector-client": true
+                    }
+                }
+                }
+            ]}
+
+        resp = ApiClient().put(bgp_neighbor_af_path(neighbor_address, af_type), body)
+        return check_ok(resp)
+
+    def delete_openconfig_bgp_bgp_neighbors_afi_safis(af_type, neighbor_address):
+        """Delete bgp neighbor"""
+        af_type = af_type.upper()
+
+        if (af_type) != "IPV4_UNICAST":
+            print(f"Not implemented error")
+            return 1
+        try:
+            ipaddress.ip_network(neighbor_address, strict=False)
+        except Exception as e:
+            print(f"{e.message}")
+            return 1
+
+        if len( neighbor_address.split("/")) != 0:
+            print("The IP address must be provided without mask")
+            return 1
+       
+        resp = ApiClient().delete(bgp_neighbor_af_path(neighbor_address, af_type), body)
+        return check_ok(resp)
 
 def run(func, args):
     """Execute the specified handler function"""
