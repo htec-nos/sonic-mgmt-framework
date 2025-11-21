@@ -404,6 +404,6 @@
         <ACTION builtin="clish_pyobj">sonic-cli-bgp delete_openconfig_bgp_bgp_neighbors_neighbor ${neighbor-ip}</ACTION>
     </COMMAND>
 
-    </VIEW>
+</VIEW>
 
 </CLISH_MODULE>
