@@ -4,6 +4,7 @@ import sys
 from cli_client import ApiClient, Path
 from rpipe_utils import pipestr
 from scripts.render_cli import show_cli_output
+import ipaddress
 
 
 def bgp_global_path():
@@ -14,6 +15,16 @@ def bgp_global_path():
 def bgp_global_config_path():
     """Returns the path for BGP global config container"""
     return Path("/restconf/data/openconfig-bgp:bgp/global/config")
+
+
+def prefix_sets_path():
+    """Returns the base path for prefix sets"""
+    return Path("/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets")
+
+
+def prefix_set_path(name):
+    """Returns the path for a specific prefix set"""
+    return Path("/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={name}", name=name)
 
 
 def check_ok(resp):
@@ -38,7 +49,13 @@ def render(path, template):
 def get_openconfig_bgp_bgp_global(path):
     return ApiClient().get(path, ignore404=True)
 
+
 class Handlers:
+
+    # ==========================================================================
+    # router bgp handlers
+    # ==========================================================================
+
     @staticmethod
     def show_openconfig_bgp_bgp_global_config(template, *args):
         """Get BGP global configuration"""
@@ -61,7 +78,8 @@ class Handlers:
                 if bgp_asn == int(as_number):
                     return 0
                 print(f"BGP instance is already running; AS is {bgp_asn}")
-                print(f"Remove existing configuration ('no router bgp {bgp_asn}') before adding a new one.")
+                print(
+                    f"Remove existing configuration ('no router bgp {bgp_asn}') before adding a new one.")
             else:
                 print(resp.error_message())
             return 1
@@ -95,6 +113,91 @@ class Handlers:
     def delete_openconfig_bgp_bgp_global():
         """Delete BGP global configuration"""
         resp = ApiClient().delete(bgp_global_path())
+        return check_ok(resp)
+
+    # ==========================================================================
+    # ip prefix-list handlers
+    # ==========================================================================
+
+    @staticmethod
+    def get_openconfig_routing_policy_defined_sets_prefix_sets(template, *args):
+        """Get all prefix sets"""
+        return render(prefix_sets_path(), template)
+
+    @staticmethod
+    def put_openconfig_routing_policy_defined_sets_prefix_sets_prefix_set(name, action, ip_prefix, range_le=None, range_ge=None):
+        """Update an existing prefix set using PUT"""
+        try:
+            addr = ipaddress.ip_network(ip_prefix, strict=False)
+        except Exception as e:
+            print(f"{e.message}")
+            return 1
+
+        mode = "IPV4" if addr.version == 4 else "IPV6"
+        try:
+            mask_le = ip_prefix.split('/')[1]
+        except Exception:
+            print("Mask length is required for prefix-list entry")
+            return 1
+
+        if range_le is None and range_ge is None:
+            oc_masklength_range = "exact"
+        else:
+            if range_le is None:
+                le = int(mask_le)
+                ge = int(range_ge)
+            if range_ge is None:
+                le = int(mask_le)
+                ge = int(range_le)
+            if range_le is not None and range_ge is not None:
+                le = int(range_le)
+                ge = int(range_ge)
+            max_bits = 32 if addr.version == 4 else 128
+            if not (0 <= le <= max_bits):
+                print(
+                    f"Bad len params: {le}..{ge}. Min length must be between 0 and {max_bits} for {'IPv4' if addr.version == 4 else 'IPv6'}")
+                return 1
+            if not (0 <= ge <= max_bits):
+                print(
+                    f"Bad len params: {le}..{ge}. Max length must be between 0 and {max_bits} for {'IPv4' if addr.version == 4 else 'IPv6'}")
+                return 1
+            if le > ge:
+                print(f"Bad len params: {le}..{ge}. Min length cannot be greater than max length")
+                return 1
+            oc_masklength_range = f"{le}..{ge}"
+
+        if action == "permit":
+            oc_action = "ACCEPT_ROUTE"
+        else:
+            oc_action = "REJECT_ROUTE"
+
+        body = {
+            "openconfig-routing-policy:prefix-set": [{
+                "name": name,
+                "config": {
+                    "name": name,
+                    "mode": mode
+                },
+                "prefixes": {
+                    "prefix": [{
+                        "ip-prefix": ip_prefix,
+                        "masklength-range": oc_masklength_range,
+                        "config": {
+                            "ip-prefix": ip_prefix,
+                            "masklength-range": oc_masklength_range,
+                            "action": oc_action
+                        }
+                    }]
+                }
+            }]
+        }
+        resp = ApiClient().put(prefix_set_path(name), body)
+        return check_ok(resp)
+
+    @staticmethod
+    def delete_openconfig_routing_policy_defined_sets_prefix_sets_prefix_set(name):
+        """Delete a prefix set"""
+        resp = ApiClient().delete(prefix_set_path(name))
         return check_ok(resp)
 
 

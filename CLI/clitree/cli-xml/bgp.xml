@@ -45,6 +45,133 @@
         </PARAM>
         <ACTION builtin="clish_pyobj">sonic-cli-bgp delete_openconfig_bgp_bgp_global</ACTION>
     </COMMAND>
+
+    <!-- ip prefix-list command -->
+    <COMMAND name="ip prefix-list" help="Configure IPv4 prefix-list">
+        <PARAM 
+            name="prefix-list-name"
+            help="Name of the IPv4 prefix-list"
+            ptype="STRING_63"
+            >
+            <PARAM
+                name="seq"
+                help="Sequence number"
+                ptype="SUBCOMMAND"
+                mode="subcommand"
+                >
+                <PARAM
+                    name="seq-no"
+                    help="Sequence number"
+                    ptype="RANGE_1_65535"
+                    >
+                    <PARAM
+                        name="action-switch"
+                        help=""
+                        ptype="SUBCOMMAND"
+                        mode="switch"
+                        >
+                        <PARAM
+                            name="permit"
+                            help="Permit matching prefixes"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="ip-prefix"
+                                help="IP prefix (A.B.C.D/mask)"
+                                ptype="IP_ADDR_MASK"
+                                >
+                                <PARAM
+                                    name="le"
+                                    help="Maximum prefix length to be matched"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    optional="true"
+                                    >
+                                    <PARAM  
+                                        name="le-value"
+                                        help="Maximum prefix length (0-32 for IPv4)"
+                                        ptype="RANGE_0_32"
+                                        >  
+                                    </PARAM>
+                                </PARAM>
+                                <PARAM
+                                    name="ge"
+                                    help="Minimum prefix length to be matched"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    optional="true"
+                                    >
+                                    <PARAM
+                                        name="ge-value"
+                                        help="Minimum prefix length (0-32 for IPv4)"
+                                        ptype="RANGE_0_32"
+                                        >
+                                    </PARAM>
+                                </PARAM>
+                            </PARAM>
+                        </PARAM>
+                        <PARAM  
+                            name="deny"
+                            help="Deny matching prefixes"
+                            ptype="SUBCOMMAND"
+                            mode="subcommand"
+                            >
+                            <PARAM
+                                name="ip-prefix"
+                                help="IP prefix (A.B.C.D/mask)"
+                                ptype="IP_ADDR_MASK"
+                                >
+                                <PARAM
+                                    name="le"
+                                    help="Maximum prefix length to be matched"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    optional="true"
+                                    >
+                                    <PARAM
+                                        name="le-value"
+                                        help="Maximum prefix length (0-32 for IPv4)"
+                                        ptype="RANGE_0_32"
+                                        >
+                                    </PARAM>
+                                </PARAM>
+                                <PARAM
+                                    name="ge"
+                                    help="Minimum prefix length to be matched"
+                                    ptype="SUBCOMMAND"
+                                    mode="subcommand"
+                                    optional="true"
+                                    >
+                                    <PARAM
+                                        name="ge-value"
+                                        help="Minimum prefix length (0-32 for IPv4)"
+                                        ptype="RANGE_0_32"
+                                        >
+                                    </PARAM>
+                                </PARAM>
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp put_openconfig_routing_policy_defined_sets_prefix_sets_prefix_set ${prefix-list-name} ${action-switch} ${ip-prefix} ${le-value} ${ge-value}</ACTION>
+    </COMMAND>
+
+    <!-- no ip prefix-list -->
+    <COMMAND
+        name="no ip prefix-list"
+        help="Remove IPv4 prefix-list"
+        >
+        <PARAM
+            name="prefix-list-name"
+            help="Name of the IPv4 prefix-list"
+            ptype="STRING_63"
+            >
+        </PARAM>
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp delete_openconfig_routing_policy_defined_sets_prefix_sets_prefix_set ${prefix-list-name}</ACTION>
+    </COMMAND>
 </VIEW>
 
 <!-- MODE: router bgp view -->
