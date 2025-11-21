@@ -24,7 +24,15 @@ def prefix_sets_path():
 
 def prefix_set_path(name):
     """Returns the path for a specific prefix set"""
-    return Path("/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={name}", name=name)
+    return Path(f"/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={name}")
+
+
+def policy_definition_path():
+    return Path("/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions")
+
+
+def policy_definition_statements_path(policy_name, statement_name):
+    return Path(f"/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={policy_name}/statements/statement={statement_name}")
 
 
 def check_ok(resp):
@@ -199,6 +207,72 @@ class Handlers:
         """Delete a prefix set"""
         resp = ApiClient().delete(prefix_set_path(name))
         return check_ok(resp)
+
+    # ==========================================================================
+    # route-map handlers
+    # ==========================================================================
+    @staticmethod
+    def get_openconfig_routing_policy_policy_definitions(template, *args):
+        """Get all prefix sets"""
+        return render(policy_definition_path(), template)
+
+    @staticmethod
+    def put_openconfig_routing_policy_policy_definitions_policy_definition_statements(policy_name, action, statement_name, prefix_list=None):
+        """Get all prefix sets"""
+        oc_action = "ACCEPT_ROUTE" if action == "permit" else "REJECT_ROUTE"
+        if prefix_list is None:
+            body = {
+                "openconfig-routing-policy:statement": [{
+                    "name": statement_name,
+                    "config": {
+                        "name": statement_name
+                    },
+                    "actions": {
+                        "config": {
+                            "policy-result":
+                                oc_action
+                        }
+                    }
+                }
+                ]}
+        else:
+            body = {
+                "openconfig-routing-policy:statement": [{
+                    "name": statement_name,
+                    "config": {
+                        "name": statement_name
+                    },
+                    "conditions": {
+                        "match-prefix-set": {
+                            "config": {
+                                "prefix-set": prefix_list
+                            }
+                        }
+                    },
+                    "actions": {
+                        "config": {
+                            "policy-result":
+                            oc_action
+                        }
+                    }
+                }
+                ]}
+        resp = ApiClient().put(policy_definition_statements_path(policy_name, statement_name), body)
+        return check_ok(resp)
+
+    @staticmethod
+    def delete_openconfig_routing_policy_policy_definitions_policy_definition_statements(policy_name, statement_name):
+        """Delete a prefix set"""
+        resp = ApiClient().delete(policy_definition_statements_path(policy_name, statement_name))
+        return check_ok(resp)
+
+    @staticmethod
+    def delete_openconfig_routing_policy_policy_definitions_policy_definition_match_prefix_list(policy_name, action, statement_name):
+        """Delete a prefix set"""
+        resp = ApiClient().delete(policy_definition_statements_path(policy_name, statement_name))
+        if check_ok(resp):
+            return 1
+        return Handlers.put_openconfig_routing_policy_policy_definitions_policy_definition_statements(policy_name, action, statement_name)
 
 
 def run(func, args):

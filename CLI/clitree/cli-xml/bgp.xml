@@ -172,6 +172,139 @@
         </PARAM>
         <ACTION builtin="clish_pyobj">sonic-cli-bgp delete_openconfig_routing_policy_defined_sets_prefix_sets_prefix_set ${prefix-list-name}</ACTION>
     </COMMAND>
+
+    <!-- route-map with permit/deny -->
+    <COMMAND
+        name="route-map"
+        help="Configure route-map"
+        view="config-route-map"
+        viewid="name=${route-map-name};action=${action-switch};stmt_n=${stmt-n}"
+        >
+        <PARAM
+            name="route-map-name"
+            help="Name of the route-map"
+            ptype="STRING_63"
+            >
+            <PARAM
+                name="action-switch"
+                help=""
+                ptype="SUBCOMMAND"
+                mode="switch"
+                >
+                <PARAM
+                    name="permit"
+                    help="Permit route"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="stmt-n"
+                        help="Statement number"
+                        ptype="RANGE_1_65535"
+                        >
+                    </PARAM>
+                </PARAM>
+                <PARAM
+                    name="deny"
+                    help="Deny route"
+                    ptype="SUBCOMMAND"
+                    mode="subcommand"
+                    >
+                    <PARAM
+                        name="stmt-n"
+                        help="Statement number"
+                        ptype="RANGE_1_65535"
+                        >
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp put_openconfig_routing_policy_policy_definitions_policy_definition_statements ${route-map-name} ${action-switch} ${stmt-n}</ACTION>
+    </COMMAND>
+
+    <COMMAND
+        name="no route-map"
+        help="Remove route-map"
+        >
+        <PARAM
+            name="route-map-name"
+            help="Name of the route-map"
+            ptype="STRING_63"
+            >
+        </PARAM>
+        <PARAM
+            name="stmt-n"
+            help="Statement number"
+            ptype="RANGE_1_65535"
+            >
+        </PARAM>
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp delete_openconfig_routing_policy_policy_definitions_policy_definition_statements ${route-map-name} ${stmt-n}</ACTION>
+    </COMMAND>
+
+</VIEW>
+
+<!-- MODE: config route map view -->
+<VIEW name="config-route-map"
+      prompt="${SYSTEM_NAME}(config-route-map)# "
+      depth="2">
+  
+    <!-- Inheritance -->
+    <NAMESPACE ref="configure-view"
+               help="false"
+               completion="false"/>
+
+    <COMMAND name="no"
+             help="Negate a command or set its defaults">
+    </COMMAND>
+
+    <!-- match ip address stubs -->
+    <COMMAND name="match"
+             help="Match values from routing table">
+    </COMMAND>
+
+    <COMMAND name="match ip"
+             help="IP specific information">
+    </COMMAND>
+
+    <COMMAND name="match ip address"
+             help="Match address of route">
+    </COMMAND>
+
+    <!-- match ip address prefix-list -->
+    <COMMAND
+        name="match ip address prefix-list"
+        help="Match IP address using prefix-list"
+        >
+        <PARAM
+            name="prefix-list-name"
+            help="Name of the prefix-list"
+            ptype="STRING_63"
+            >
+        </PARAM>
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp put_openconfig_routing_policy_policy_definitions_policy_definition_statements ${name} ${action} ${stmt_n} ${prefix-list-name}</ACTION>
+    </COMMAND>
+
+    <!-- no match ip address stubs -->
+    <COMMAND name="no match"
+             help="Delete match values from routing table">
+    </COMMAND>
+
+    <COMMAND name="no match ip"
+             help="Delete IP specific information">
+    </COMMAND>
+
+    <COMMAND name="no match ip address"
+             help="Delete match address of route">
+    </COMMAND>
+
+    <!-- no match ip address prefix-list -->
+    <COMMAND
+        name="no match ip address prefix-list"
+        help="Remove match IP address prefix-list"
+        >
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp delete_openconfig_routing_policy_policy_definitions_policy_definition_match_prefix_list ${name} ${action} ${stmt_n}</ACTION>
+    </COMMAND>
+
 </VIEW>
 
 <!-- MODE: router bgp view -->
