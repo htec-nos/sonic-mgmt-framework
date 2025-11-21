@@ -27,6 +27,12 @@ def prefix_set_path(name):
     return Path(f"/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={name}")
 
 
+def bgp_neighbor_path(neighbor_ip):
+    """Returns the path for a specific BGP neighbor"""
+    return Path("/restconf/data/openconfig-bgp:bgp/neighbors/neighbor={neighbor_address}",
+                neighbor_address=neighbor_ip)
+
+
 def policy_definition_path():
     return Path("/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions")
 
@@ -209,6 +215,95 @@ class Handlers:
         return check_ok(resp)
 
     # ==========================================================================
+    # bgp-neighbor handlers
+    # ==========================================================================
+    @staticmethod
+    def get_openconfig_bgp_bgp_neighbors_neighbor(neighbor_ip, template, *args):
+        """Get BGP neighbor configuration"""
+        path = bgp_neighbor_path(neighbor_ip)
+        return render(path, template)
+
+    @staticmethod
+    def put_openconfig_bgp_bgp_neighbors_neighbor(neighbor_addr, remote_asn=None, name=None, local_addr=None):
+        """Configure BGP neighbor attributes"""
+        body = {
+            "openconfig-bgp:neighbor": [{
+                "neighbor-address": neighbor_addr,
+                "config": {
+                    "neighbor-address": neighbor_addr,
+                },
+            }]
+        }
+        if remote_asn is not None:  
+            body["openconfig-bgp:neighbor"][0]["config"]["peer-as"] = int(remote_asn)
+        if name is not None:
+            body["openconfig-bgp:neighbor"][0]["config"]["description"] = name
+        if local_addr is not None:  
+            body["openconfig-bgp:neighbor"][0]["transport"] = {
+                "config": {
+                    "local-address": local_addr
+                }
+            }
+
+        resp = ApiClient().put(bgp_neighbor_path(neighbor_addr), body)
+        return check_ok(resp)
+
+    @staticmethod
+    def put_openconfig_bgp_bgp_neighbors_neighbor_remote_as(neighbor_ip, remote_as_number):
+        """Configure BGP neighbor remote AS"""
+        path = bgp_neighbor_path(neighbor_ip)
+        body = {
+            "openconfig-bgp:neighbor": [{
+                "neighbor-address": neighbor_ip,
+                "config": {
+                    "neighbor-address": neighbor_ip,
+                    "peer-as": int(remote_as_number)
+                }
+            }]
+        }
+        resp = ApiClient().put(path, body)
+        return check_ok(resp)
+
+    @staticmethod  
+    def put_openconfig_bgp_bgp_neighbors_neighbor_description(neighbor_ip, name):
+        """Configure BGP neighbor description"""
+        path = bgp_neighbor_path(neighbor_ip)
+        body = {
+            "openconfig-bgp:neighbor": [{
+                "neighbor-address": neighbor_ip,
+                "config": {
+                    "neighbor-address": neighbor_ip,
+                    "description": name
+                }
+            }]
+        }
+        resp = ApiClient().put(path, body)
+        return check_ok(resp)
+  
+    @staticmethod
+    def put_openconfig_bgp_bgp_neighbors_neighbor_update_source(neighbor_ip, local_address):
+        """Configure BGP neighbor update source"""
+        path = bgp_neighbor_path(neighbor_ip)
+        body = {
+            "openconfig-bgp:neighbor": [{
+                "neighbor-address": neighbor_ip,
+                "transport": {
+                    "config": {
+                        "local-address": local_address
+                    }
+                }
+            }]
+        }
+        resp = ApiClient().put(path, body)
+        return check_ok(resp)
+
+    @staticmethod
+    def delete_openconfig_bgp_bgp_neighbors_neighbor(neighbor_ip):
+        """Delete BGP neighbor configuration"""
+        path = bgp_neighbor_path(neighbor_ip)
+        resp = ApiClient().delete(path)
+        return check_ok(resp)
+
     # route-map handlers
     # ==========================================================================
     @staticmethod

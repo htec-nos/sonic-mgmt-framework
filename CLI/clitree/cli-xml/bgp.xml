@@ -357,6 +357,53 @@
         >
         <ACTION builtin="clish_pyobj">sonic-cli-bgp patch_openconfig_bgp_bgp_global_config ${as} 0.0.0.0</ACTION>
     </COMMAND>
+
+    <!-- neighbor command -->
+    <COMMAND name="neighbor" help="Configure BGP neighbor">
+        <PARAM name="neighbor-ip" help="Neighbor IP address" ptype="IP_ADDR">
+            <PARAM name="neighbor-subcommands" help="" ptype="SUBCOMMAND" mode="switch">
+                <!-- remote-as subcommand -->
+                <PARAM name="remote-as" help="Specify a BGP neighbor" ptype="SUBCOMMAND" mode="subcommand">
+                    <PARAM name="as-number" help="AS number" ptype="RANGE_1_4294967295">
+                    </PARAM>
+                </PARAM>
+                <!-- description subcommand -->
+                <PARAM name="description" help="Neighbor specific description" ptype="SUBCOMMAND" mode="subcommand">
+                    <PARAM name="desc-text" help="Description text" ptype="STRING">
+                    </PARAM>
+                </PARAM>
+                <!-- update-source subcommand -->
+                <PARAM name="update-source" help="Source of routing updates" ptype="SUBCOMMAND" mode="subcommand">
+                    <PARAM name="source-ip" help="Source IP address" ptype="IP_ADDR">
+                    </PARAM>
+                </PARAM>
+            </PARAM>
+        </PARAM>
+        <ACTION>
+            if test "${neighbor-subcommands}" = "remote-as"; then&#xA;
+                python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py put_openconfig_bgp_bgp_neighbors_neighbor_remote_as ${neighbor-ip} ${as-number}&#xA;
+            elif test "${neighbor-subcommands}" = "description"; then&#xA;
+                python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py put_openconfig_bgp_bgp_neighbors_neighbor_description ${neighbor-ip} ${desc-text}&#xA;
+            elif test "${neighbor-subcommands}" = "update-source"; then&#xA;
+                python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py put_openconfig_bgp_bgp_neighbors_neighbor_update_source ${neighbor-ip} ${source-ip}&#xA;
+            fi
+        </ACTION>
+    </COMMAND>
+
+    <!-- no neighbor command -->
+    <COMMAND
+        name="no neighbor"
+        help="Remove BGP neighbor configuration"
+        >
+        <PARAM
+            name="neighbor-ip"
+            help="Neighbor IP address"
+            ptype="IP_ADDR"
+            >
+        </PARAM>
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp delete_openconfig_bgp_bgp_neighbors_neighbor ${neighbor-ip}</ACTION>
+    </COMMAND>
+
 </VIEW>
 
 </CLISH_MODULE>
