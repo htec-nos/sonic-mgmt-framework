@@ -24,14 +24,13 @@ def prefix_sets_path():
 
 def prefix_set_path(name):
     """Returns the path for a specific prefix set"""
-    return Path("/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={name}", name=name)
+    return Path(f"/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={name}")
 
 
 def bgp_neighbor_path(neighbor_ip):
     """Returns the path for a specific BGP neighbor"""
     return Path("/restconf/data/openconfig-bgp:bgp/neighbors/neighbor={neighbor_address}",
                 neighbor_address=neighbor_ip)
-    return Path(f"/restconf/data/openconfig-routing-policy:routing-policy/defined-sets/prefix-sets/prefix-set={name}")
 
 
 def policy_definition_path():
