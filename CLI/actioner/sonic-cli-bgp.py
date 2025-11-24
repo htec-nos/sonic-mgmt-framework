@@ -98,7 +98,7 @@ class Handlers:
         }
         resp = ApiClient().post(bgp_global_path(), body)
         if not resp.ok():
-            if "configuration already exists" in resp.error_message():
+            if "already exists" in resp.error_message():
                 resp = get_openconfig_bgp_bgp_global(bgp_global_path())
                 bgp_asn = resp.content['openconfig-bgp:global']['config']['as']
                 if bgp_asn == int(as_number):
