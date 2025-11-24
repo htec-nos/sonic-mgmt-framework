@@ -451,7 +451,7 @@ class Handlers:
             print(f"{e.message}")
             return 1
 
-        if len( neighbor_address.split("/")) != 0:
+        if len( neighbor_address.split("/")) != 1:
             print("The IP address must be provided without mask")
             return 1
        
@@ -460,26 +460,45 @@ class Handlers:
                 "afi-safi-name": f"openconfig-bgp-types:{af_type}",
                 "config": {
                     "afi-safi-name": f"openconfig-bgp-types:{af_type}",
-                    "enabled": false
-                },
-                "apply-policy": {
-                    "config": {
-                    "export-policy": [
-                        "LEAF1_OUT"
-                    ],
-                    "import-policy": [
-                        "LEAF1_IN"
-                    ]
-                    }
-                },
-                "openconfig-bgp-neighbor-af-ext:neighbor-afi-safi-ext": {
-                    "config": {
-                    "next-hop-self": false,
-                    "route-reflector-client": true
-                    }
+                    "enabled": True
                 }
                 }
             ]}
+
+        resp = ApiClient().put(bgp_neighbor_af_path(neighbor_address, af_type), body)
+        return check_ok(resp)
+
+    @staticmethod
+    def put_openconfig_bgp_bgp_neighbors_afi_safis_route_map(af_type, neighbor_address, route_map, direction):
+        """Configure BGP networks """
+        af_type = af_type.upper()
+
+        if (af_type) != "IPV4_UNICAST":
+            print(f"Not implemented error")
+            return 1
+        try:
+            ipaddress.ip_network(neighbor_address, strict=False)
+        except Exception as e:
+            print(f"{e.message}")
+            return 1
+
+        if len( neighbor_address.split("/")) != 1:
+            print("The IP address must be provided without mask")
+            return 1
+       
+        body = {
+            "openconfig-bgp:afi-safi": [{
+                "afi-safi-name": f"openconfig-bgp-types:{af_type}",
+                "config": {
+                    "afi-safi-name": f"openconfig-bgp-types:{af_type}",
+                    "enabled": True
+                }
+                }
+            ]}
+        if direction == "in" :
+            body = {
+                
+            }
 
         resp = ApiClient().put(bgp_neighbor_af_path(neighbor_address, af_type), body)
         return check_ok(resp)
