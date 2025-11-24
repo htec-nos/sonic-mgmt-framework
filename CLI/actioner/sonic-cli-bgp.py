@@ -32,12 +32,14 @@ def bgp_neighbor_path(neighbor_ip):
     return Path("/restconf/data/openconfig-bgp:bgp/neighbors/neighbor={neighbor_address}",
                 neighbor_address=neighbor_ip)
 
+
 def policy_definition_path():
     return Path("/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions")
 
 
 def policy_definition_statements_path(policy_name, statement_name):
     return Path(f"/restconf/data/openconfig-routing-policy:routing-policy/policy-definitions/policy-definition={policy_name}/statements/statement={statement_name}")
+
 
 def bgp_network_af_path(addr, mask, af_type):
     return Path(f"/restconf/data/openconfig-bgp:bgp/global/afi-safis/afi-safi={af_type}/openconfig-bgp-network-ext:networks/network={addr}%2F{mask}/config")
@@ -46,8 +48,10 @@ def bgp_network_af_path(addr, mask, af_type):
 def bgp_network_af_delete_path(addr, mask, af_type):
     return Path(f"/restconf/data/openconfig-bgp:bgp/global/afi-safis/afi-safi={af_type}/openconfig-bgp-network-ext:networks/network={addr}%2F{mask}")
 
+
 def bgp_neighbor_af_path(neighbor_address, af_type):
     return Path(f"/restconf/data/openconfig-bgp:bgp/neighbors/neighbor={neighbor_address}/afi-safis/afi-safi={af_type}")
+
 
 def check_ok(resp):
     """Check if response is OK and print error if not"""
@@ -242,11 +246,11 @@ class Handlers:
                 },
             }]
         }
-        if remote_asn is not None:  
+        if remote_asn is not None:
             body["openconfig-bgp:neighbor"][0]["config"]["peer-as"] = int(remote_asn)
         if name is not None:
             body["openconfig-bgp:neighbor"][0]["config"]["description"] = name
-        if local_addr is not None:  
+        if local_addr is not None:
             body["openconfig-bgp:neighbor"][0]["transport"] = {
                 "config": {
                     "local-address": local_addr
@@ -272,7 +276,7 @@ class Handlers:
         resp = ApiClient().put(path, body)
         return check_ok(resp)
 
-    @staticmethod  
+    @staticmethod
     def put_openconfig_bgp_bgp_neighbors_neighbor_description(neighbor_ip, name):
         """Configure BGP neighbor description"""
         path = bgp_neighbor_path(neighbor_ip)
@@ -287,7 +291,7 @@ class Handlers:
         }
         resp = ApiClient().put(path, body)
         return check_ok(resp)
-  
+
     @staticmethod
     def put_openconfig_bgp_bgp_neighbors_neighbor_update_source(neighbor_ip, local_address):
         """Configure BGP neighbor update source"""
@@ -393,7 +397,7 @@ class Handlers:
         except Exception as e:
             print(f"{e.message}")
             return 1
-        
+
         try:
             mask = network_address.split("/")[1]
             addr = network_address.split("/")[0]
@@ -401,7 +405,7 @@ class Handlers:
             print("Mask length is required for network address entry")
             print(f"{e.message}")
             return 1
-    
+
         body = {
             "openconfig-bgp-network-ext:config": {
                 "prefix": network_address
@@ -423,10 +427,10 @@ class Handlers:
         except Exception as e:
             print(f"{e.message}")
             return 1
-        
+
         try:
             mask = network_address.split("/")[1]
-            addr = network_addresssplit("/")[0]
+            addr = network_address.split("/")[0]
         except Exception:
             print("Mask length is required for network address entry")
             return 1
@@ -454,7 +458,7 @@ class Handlers:
         if len( neighbor_address.split("/")) != 1:
             print("The IP address must be provided without mask")
             return 1
-       
+
         body = {
             "openconfig-bgp:afi-safi": [{
                 "afi-safi-name": f"openconfig-bgp-types:{af_type}",
@@ -462,7 +466,7 @@ class Handlers:
                     "afi-safi-name": f"openconfig-bgp-types:{af_type}",
                     "enabled": True
                 }
-                }
+            }
             ]}
 
         resp = ApiClient().put(bgp_neighbor_af_path(neighbor_address, af_type), body)
@@ -485,7 +489,7 @@ class Handlers:
         if len( neighbor_address.split("/")) != 1:
             print("The IP address must be provided without mask")
             return 1
-       
+
         body = {
             "openconfig-bgp:afi-safi": [{
                 "afi-safi-name": f"openconfig-bgp-types:{af_type}",
@@ -493,13 +497,48 @@ class Handlers:
                     "afi-safi-name": f"openconfig-bgp-types:{af_type}",
                     "enabled": True
                 }
-                }
-            ]}
-        if direction == "in" :
-            body = {
-                
             }
+            ]}
+        body["openconfig-bgp:afi-safi"][0]["apply-policy"] = {"config": {}}
+        if direction == "in" :
+            body["openconfig-bgp:afi-safi"][0]["apply-policy"]["config"]["import-policy"] = [route_map]
+        else:
+            body["openconfig-bgp:afi-safi"][0]["apply-policy"]["config"]["export-policy"] = [route_map]
+        resp = ApiClient().put(bgp_neighbor_af_path(neighbor_address, af_type), body)
+        return check_ok(resp)
 
+    @staticmethod
+    def put_openconfig_bgp_bgp_neighbors_afi_safis_next_hop_self(af_type, neighbor_address):
+        """Configure BGP networks """
+        af_type = af_type.upper()
+
+        if (af_type) != "IPV4_UNICAST":
+            print(f"Not implemented error")
+            return 1
+        try:
+            ipaddress.ip_network(neighbor_address, strict=False)
+        except Exception as e:
+            print(f"{e.message}")
+            return 1
+
+        if len( neighbor_address.split("/")) != 1:
+            print("The IP address must be provided without mask")
+            return 1
+
+        body = {
+            "openconfig-bgp:afi-safi": [{
+                "afi-safi-name": f"openconfig-bgp-types:{af_type}",
+                "config": {
+                    "afi-safi-name": f"openconfig-bgp-types:{af_type}",
+                    "enabled": True
+                },
+                "openconfig-bgp-neighbor-af-ext:neighbor-afi-safi-ext": {
+                    "config": {
+                        "next-hop-self": True
+                    }
+                }
+            }
+            ]}
         resp = ApiClient().put(bgp_neighbor_af_path(neighbor_address, af_type), body)
         return check_ok(resp)
 
@@ -516,12 +555,13 @@ class Handlers:
             print(f"{e.message}")
             return 1
 
-        if len( neighbor_address.split("/")) != 0:
+        if len( neighbor_address.split("/")) != 1:
             print("The IP address must be provided without mask")
             return 1
-       
-        resp = ApiClient().delete(bgp_neighbor_af_path(neighbor_address, af_type), body)
+
+        resp = ApiClient().delete(bgp_neighbor_af_path(neighbor_address, af_type))
         return check_ok(resp)
+
 
 def run(func, args):
     """Execute the specified handler function"""

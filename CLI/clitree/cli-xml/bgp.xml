@@ -456,7 +456,7 @@
  
     <!-- neighbor command in address-family context -->
     <COMMAND name="neighbor" help="Configure BGP neighbor in address family">
-        <PARAM name="neighbor-ip" help="Neighbor IP address" ptype="IP_ADDR">
+        <PARAM name="neighbor-ip" help="Neighbor IP address (A.B.C.D)" ptype="IP_ADDR">
             <PARAM name="neighbor-af-subcommands" help="" ptype="SUBCOMMAND" mode="switch">
                 <!-- activate subcommand -->
                 <PARAM name="activate" help="Enable address family for this neighbor" ptype="SUBCOMMAND" mode="subcommand">
@@ -485,6 +485,14 @@
             elif test "${neighbor-af-subcommands}" = "next-hop-self"; then&#xA;
                 python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py put_openconfig_bgp_bgp_neighbors_afi_safis_next_hop_self ${af_type} ${neighbor-ip}&#xA;
             fi
+        </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no neighbor" help="Configure BGP neighbor in address family">
+        <PARAM name="neighbor-ip" help="Neighbor IP address (A.B.C.D)" ptype="IP_ADDR">
+        </PARAM>
+        <ACTION>
+            python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_bgp_neighbors_afi_safis ${af_type} ${neighbor-ip}&#xA;
         </ACTION>
     </COMMAND>
  
