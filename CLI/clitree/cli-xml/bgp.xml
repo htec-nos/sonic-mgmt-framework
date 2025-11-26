@@ -310,7 +310,7 @@
 <!-- MODE: router bgp view -->
 <VIEW
     name="configure-bgp-view"
-    prompt="${SYSTEM_NAME}(config-router-bgp)# "
+    prompt="${SYSTEM_NAME}(config-router)# "
     depth="2"
     >
     <!-- Inheritance from configure-view -->
@@ -404,6 +404,99 @@
         <ACTION builtin="clish_pyobj">sonic-cli-bgp delete_openconfig_bgp_bgp_neighbors_neighbor ${neighbor-ip}</ACTION>
     </COMMAND>
 
+    <COMMAND
+        name="address-family"
+        help="Configure BGP address family"
+        view="config-router-af"
+        viewid="af_type=ipv4_unicast"
+        >
+        <PARAM
+            name="ipv4"
+            help="IPv4 address family"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+        >
+        <PARAM
+            name="unicast"
+            help="Unicast address family"
+            ptype="SUBCOMMAND"
+            mode="subcommand"
+        />
+        </PARAM>
+        <ACTION builtin="clish_nop"></ACTION>  
+    </COMMAND>
+
+</VIEW>
+
+<!-- New address-family view -->
+<VIEW name="config-router-af"
+      prompt="${SYSTEM_NAME}(config-router-af)# "
+      depth="3">
+ 
+    <!-- Inheritance -->
+    <NAMESPACE ref="configure-view" help="false" completion="false"/>
+ 
+ 
+    <COMMAND name="no" help="Negate a command or set its defaults">
+        <ACTION builtin="clish_nop"></ACTION>
+    </COMMAND>
+ 
+    <!-- network command -->
+    <COMMAND name="network" help="Specify a network to announce via BGP">
+        <PARAM name="prefix" help="IP prefix (A.B.C.D/mask)" ptype="IP_ADDR_MASK">
+        </PARAM>
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp put_openconfig_bgp_bgp_global_afi_safis_networks ${af_type} ${prefix}</ACTION>
+    </COMMAND>
+ 
+    <COMMAND name="no network" help="Remove network announcement">
+        <PARAM name="prefix" help="IP prefix (A.B.C.D/mask)" ptype="IP_ADDR_MASK">
+        </PARAM>
+        <ACTION builtin="clish_pyobj">sonic-cli-bgp delete_openconfig_bgp_bgp_global_afi_safis_networks ${af_type} ${prefix}</ACTION>
+    </COMMAND>
+ 
+    <!-- neighbor command in address-family context -->
+    <COMMAND name="neighbor" help="Configure BGP neighbor in address family">
+        <PARAM name="neighbor-ip" help="Neighbor IP address (A.B.C.D)" ptype="IP_ADDR">
+            <PARAM name="neighbor-af-subcommands" help="" ptype="SUBCOMMAND" mode="switch">
+                <!-- activate subcommand -->
+                <PARAM name="activate" help="Enable address family for this neighbor" ptype="SUBCOMMAND" mode="subcommand">
+                </PARAM>
+                <!-- route-map subcommand -->
+                <PARAM name="route-map" help="Apply route-map to neighbor" ptype="SUBCOMMAND" mode="subcommand">
+                    <PARAM name="route-map-name" help="Route-map name" ptype="STRING">
+                        <PARAM name="direction-switch" help="" ptype="SUBCOMMAND" mode="switch">
+                            <PARAM name="in" help="Apply to incoming routes" ptype="SUBCOMMAND" mode="subcommand">
+                            </PARAM>
+                            <PARAM name="out" help="Apply to outgoing routes" ptype="SUBCOMMAND" mode="subcommand">
+                            </PARAM>
+                        </PARAM>
+                    </PARAM>
+                </PARAM>
+                <!-- next-hop-self subcommand -->
+                <PARAM name="next-hop-self" help="Set next hop to self for routes advertised to this neighbor" ptype="SUBCOMMAND" mode="subcommand">
+                </PARAM>
+            </PARAM>
+        </PARAM>
+        <ACTION>
+            if test "${neighbor-af-subcommands}" = "activate"; then&#xA;
+                python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py put_openconfig_bgp_bgp_neighbors_afi_safis_activate ${af_type} ${neighbor-ip}&#xA;
+            elif test "${neighbor-af-subcommands}" = "route-map"; then&#xA;
+                python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py put_openconfig_bgp_bgp_neighbors_afi_safis_route_map ${af_type} ${neighbor-ip} ${route-map-name} ${direction-switch}&#xA;
+            elif test "${neighbor-af-subcommands}" = "next-hop-self"; then&#xA;
+                python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py put_openconfig_bgp_bgp_neighbors_afi_safis_next_hop_self ${af_type} ${neighbor-ip}&#xA;
+            fi
+        </ACTION>
+    </COMMAND>
+
+    <COMMAND name="no neighbor" help="Configure BGP neighbor in address family">
+        <PARAM name="neighbor-ip" help="Neighbor IP address (A.B.C.D)" ptype="IP_ADDR">
+        </PARAM>
+        <ACTION>
+            python3 $SONIC_CLI_ROOT/sonic-cli-bgp.py delete_openconfig_bgp_bgp_neighbors_afi_safis ${af_type} ${neighbor-ip}&#xA;
+        </ACTION>
+    </COMMAND>
+ 
+ 
 </VIEW>
 
 </CLISH_MODULE>
